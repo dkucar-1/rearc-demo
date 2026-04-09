@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from datetime import date
 
-def sync_bls_files_to_s3(bucket, s3_key, url, regex):
+def sync_bls_files_to_s3(url, bucket, s3_key):
 
     s3_client = boto3.client('s3')
     
@@ -30,17 +30,38 @@ def sync_bls_files_to_s3(bucket, s3_key, url, regex):
         file_name = file_url.split('/')[-1]
     
         # Download
-        file_data = requests.get(full_url).content
+        data = requests.get(full_url).content
         key = f'{s3_key}/{today}/{file_name}'
         
         # Upload to S3
-        s3_client.put_object(Bucket=bucket, Key=key, Body=file_data)
+        s3_client.put_object(Bucket=bucket, Key=key, Body=data)
         print(f"Uploaded {file_name} to {bucket} with key {key}...")
+
+
+def sync_datausa_to_s3(url, bucket, key):
+    import requests
+
+    s3_client = boto3.client('s3')
+
+    # 2. Send the GET request
+    response = requests.get(url)
+    key = f'{key}/datausa_population.json'
+
+    # 3. Check if the request was successful (status code 200)
+    if response.status_code == 200:
+        # 4. Parse the JSON response
+        data = response.content
+        s3_client.put_object(Bucket=bucket, Key=key, Body=data)
+    else:
+        print(f"Error: {response.status_code}")
 
 
 bucket = 'rearc-demo-dk'
 s3_key= 'inbound'
 url = 'https://download.bls.gov/pub/time.series/pr/'
-regex = r'*'  
 
-sync_bls_files_to_s3(bucket, s3_key, url, regex)
+#sync_bls_files_to_s3(url, bucket, s3_key)
+
+url = "https://api.datausa.io/tesseract/data.jsonrecords?cube=acs_yg_total_population_5&drilldowns=State,Year&measures=Population"
+
+sync_datausa_to_s3(url, bucket, s3_key)
