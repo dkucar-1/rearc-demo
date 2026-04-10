@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from urllib import response
 
 import requests
@@ -48,20 +49,19 @@ def sync_datausa_to_s3(url, bucket, key):
     key = f'{key}/datausa_population.json'
 
     # 3. Check if the request was successful (status code 200)
-    if response.status_code == 200:
-        # 4. Parse the JSON response
+    try:
         data = response.content
         s3_client.put_object(Bucket=bucket, Key=key, Body=data)
-    else:
-        print(f"Error: {response.status_code}")
+    except Exception as e:
+        print(f"Error: {e}")
 
 
-bucket = 'rearc-demo-dk'
-s3_key= 'inbound'
-url = 'https://download.bls.gov/pub/time.series/pr/'
+if __name__ =="__main__": 
 
-#sync_bls_files_to_s3(url, bucket, s3_key)
+    bucket = 'rearc-demo-dk'
+    s3_key = 'inbound'
+    url = 'https://download.bls.gov/pub/time.series/pr/'  
+    sync_bls_files_to_s3(url, bucket, s3_key)  
 
-url = "https://api.datausa.io/tesseract/data.jsonrecords?cube=acs_yg_total_population_5&drilldowns=State,Year&measures=Population"
-
-sync_datausa_to_s3(url, bucket, s3_key)
+    url = "https://api.datausa.io/tesseract/data.jsonrecords?cube=acs_yg_total_population_5&drilldowns=State,Year&measures=Population"
+    sync_datausa_to_s3(url, bucket, s3_key)
