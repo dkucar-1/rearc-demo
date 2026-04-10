@@ -20,7 +20,7 @@ def sync_bls_files_to_s3(url, bucket, s3_key):
 
     # 1. Get webpage and find files
     response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, 'html.parser')
+    soup = BeautifulSoup(response.content, 'html.parser')
     links = [a['href'] for a in soup.find_all('a', href=True)]
 
     matched_files = [link for link in links] 
