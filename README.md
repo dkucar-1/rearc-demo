@@ -23,4 +23,18 @@ In order to access, we also need `s3:ListBucket` permissions on the bucket. This
 ### Reading the data
 Use `spark.read.. csv` with header, tabs as separators to read the bls dataset. Use `spark.read..json` selecting on the `data` column to read dataa from the datausa dataset.
 
+We note that reading the BLS dataset, the column names are padded with whitespace
+```
+root
+ |-- series_id        : string (nullable = true)
+ |-- year: integer (nullable = true)
+ |-- period: string (nullable = true)
+ |--        value: double (nullable = true)
+ |-- footnote_codes: string (nullable = true)
+```
+Need to trim. Use this syntax to rename columns
+```
+new_cols = [x.strip() for x in bls_df.columns]
+bls_renamed = bls_df.toDF(*new_cols)
+```
 
