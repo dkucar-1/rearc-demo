@@ -7,61 +7,41 @@ import re
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from datetime import date
+from io import BytesIO
 
-def sync_bls_files_to_s3(url, bucket, s3_key):
-
-    s3_client = boto3.client('s3')
+def sync_file_to_s3(url, bucket, s3_key, output_file=None):
     
     today = date.today()
 
+    # if output_file is not provided, it is implied from the last part of the url
+    output_file = url.split('/')[-1] if not output_file else output_file
+
+    # provide contact info in headers to avoid errors from some servers that block unknown agents. This is a good practice when scraping or downloading data.
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'User-Agent': 'RearcDemo/1.0 (contact: intrepid_cool_lady@yahoo.com)'
     }
 
-    # 1. Get webpage and find files
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    links = [a['href'] for a in soup.find_all('a', href=True)]
-
-    matched_files = [link for link in links] 
-   
-    # 3. Download and Upload
-    for file_url in matched_files:
-        full_url = urljoin(url, file_url)
-        file_name = file_url.split('/')[-1]
-    
-        # Download
-        data = requests.get(full_url).content
-        key = f'{s3_key}/{today}/{file_name}'
-        
-        # Upload to S3
-        s3_client.put_object(Bucket=bucket, Key=key, Body=data)
-        print(f"Uploaded {file_name} to {bucket} with key {key}...")
-
-
-def sync_datausa_to_s3(url, bucket, key):
-    import requests
-
-    s3_client = boto3.client('s3')
-
-    # 2. Send the GET request
-    response = requests.get(url)
-    key = f'{key}/datausa_population.json'
-
-    # 3. Check if the request was successful (status code 200)
     try:
-        data = response.content
-        s3_client.put_object(Bucket=bucket, Key=key, Body=data)
-    except Exception as e:
-        print(f"Error: {e}")
+    # 2. Download the data
+        response = requests.get(url, headers=headers, timeout=30)
+        response.raise_for_status() # Check for 403 or other errors
 
+    # 3. Upload directly to S3
+        s3 = boto3.client('s3')
+        key = f'{s3_key}/{today}/{output_file}'
+        
+        s3.upload_fileobj(BytesIO(response.content), bucket, key)
+        print(f"Successfully uploaded to s3://{bucket}/{key}")
+
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to fetch data: {e}")
 
 if __name__ =="__main__": 
 
     bucket = 'rearc-demo-dk'
     s3_key = 'inbound'
-    url = 'https://download.bls.gov/pub/time.series/pr/'  
-    sync_bls_files_to_s3(url, bucket, s3_key)  
+    url = 'https://download.bls.gov/pub/time.series/pr/pr.data.0.Current'  
+    sync_file_to_s3(url, bucket, s3_key)  
 
     url = "https://api.datausa.io/tesseract/data.jsonrecords?cube=acs_yg_total_population_5&drilldowns=State,Year&measures=Population"
-    sync_datausa_to_s3(url, bucket, s3_key)
+    sync_file_to_s3(url, bucket, s3_key, output_file='datausa_population.json')
