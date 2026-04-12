@@ -96,6 +96,16 @@ Whenever Lambda writes a fresh datausa_population.json to S3, this config ensure
 This is deployed as a separate CloudFormation stack in `rearc-quest-part4-step3.yaml`. The template creates:
 - A Lambda function that reads both datasets from S3, filters BLS for `series_id == PRS30006032` and `period == Q01`, joins with population data on `year`, and logs the resulting table to CloudWatch.
 - An `AWS::Lambda::EventSourceMapping` that wires the SQS queue as a trigger, so the Lambda runs automatically whenever a new message arrives.
+- The code that does the "heavy lifting" is added to the `def handler(event, context)` block 
+  - because Spark is too heavy-weight for Lambda (requires JVM, would easily exceed 256mb limit), the code had to be re-written in terms of dictionary lookups
+  ```
+  for row in bls_rows:
+    if not sid.startswith(SERIES_ID): continue
+    if row.get('period', '') != PERIOD: continue
+    pop = pop_by_year.get(year)
+    if pop is not None:
+        results.append({...})
+  ```
 
 To deploy:
 ```
