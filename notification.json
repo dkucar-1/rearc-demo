@@ -1,0 +1,17 @@
+{
+  "QueueConfigurations": [
+    {
+      "Id": "PopulationJsonWritten",
+      "QueueArn": "arn:aws:sqs:us-east-2:075550799614:rearc-quest-population-events",
+      "Events": ["s3:ObjectCreated:*"],
+      "Filter": {
+        "Key": {
+          "FilterRules": [
+            { "Name": "prefix", "Value": "inbound/" },
+            { "Name": "suffix", "Value": "datausa_population.json" }
+          ]
+        }
+      }
+    }
+  ]
+}

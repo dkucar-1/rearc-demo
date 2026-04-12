@@ -37,4 +37,11 @@ Need to trim. Use this syntax to rename columns
 new_cols = [x.strip() for x in bls_df.columns]
 bls_renamed = bls_df.toDF(*new_cols)
 ```
+## Part 1
+For this part, we read in the population json. The population is given in terms of states; we want the population of all states, hence we group by states and collect the total sum. Finally, we use the built-in Spark `summary` function to get the mean and standard deviation for the populations recorded across 2013 to 2018.
 
+## Part 2
+For every `series_id`, find the best year: the year with the max/largest sum of `value` for all quarters in that year. This broken into two queries. The first query groups by `series_id` and `year` and sums up the values. The second query takes this input and orders value in descending order (via a window function), while keeping `series_id`, `year` and `value` columns, then selecting the highest `value` (rank of 1) with its associated `year`. In the end then, we have the entire set of unique `series_id` with their associated best `year` and `value`
+
+## Part 3
+For this part, to my understanding, unrelated to Part 2, we inner join the BLS dataset and the population dataset on `year`, filtering on a particular `series_id` and `period`. We need to trim whitespace just in case.
