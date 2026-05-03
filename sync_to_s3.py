@@ -66,7 +66,7 @@ def sync_file_to_s3(url, bucket, s3_key, output_file=None):
 
 if __name__ =="__main__": 
 
-    bucket = 'rearc-demo-dk'
+    bucket = 'demo-dk'
     s3_key = 'inbound'
     url = 'https://download.bls.gov/pub/time.series/pr/pr.data.0.Current'  
     sync_file_to_s3(url, bucket, s3_key)  
